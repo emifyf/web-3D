@@ -7,6 +7,9 @@ let scene, camera, renderer, controls;
 let stlMeshes = [];
 let fpsElement;
 let clock = new THREE.Clock();
+// --- CLIPPING PLANE (PLANO DE CORTE) ---
+
+// Esta variable global almacenará el plano de corte que se aplicará a todos los modelos STL
 let clippingPlane;
 let globalBoundingBox = null;
 let stlFilesLoaded = 0;
@@ -116,20 +119,25 @@ function centerCameraAndSlider() {
     controls.target.copy(center);
     controls.update();
 
-    // Ajustar el slider de corte al rango global y setear el clipping plane
+    // Definimos el rango del slider y el valor inicial del plano de corte
     const minY = globalBoundingBox.min.y;
     const maxY = globalBoundingBox.max.y;
     const centerY = center.y;
 
-    // Crear el clipping plane en el centro del bounding box
+    // --- CREACIÓN DEL PLANO DE CORTE ---
+    // El plano de corte se define con una normal apuntando hacia arriba (eje Y negativo)
+    // y pasa por el centro vertical del bounding box global de los modelos
     clippingPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), -centerY);
 
-    // Asignar el clipping plane a todos los materiales y forzar actualización
+    // --- ASIGNACIÓN DEL PLANO DE CORTE A LOS MODELOS ---
+    // Recorremos todos los modelos STL y les asignamos el plano de corte
+    // Esto permite que el corte afecte a todos los modelos simultáneamente
     stlMeshes.forEach(mesh => {
-        mesh.material.clippingPlanes = [clippingPlane];
-        mesh.material.needsUpdate = true;
+        mesh.material.clippingPlanes = [clippingPlane]; // Asignar el plano
+        mesh.material.needsUpdate = true; // Forzar actualización del material
     });
 
+    // Actualizamos el slider para que controle el plano de corte
     updateClippingSliderRange(minY, maxY, centerY);
 
     // Crear el piso adaptativo
@@ -175,7 +183,11 @@ function createClippingSlider() {
         document.body.appendChild(slider);
     }
     slider.style.display = '';
+    // --- CONTROL DEL PLANO DE CORTE POR SLIDER ---
+    // Cada vez que el usuario mueve el slider, se actualiza la posición del plano de corte
     slider.addEventListener('input', (e) => {
+        // El valor del slider se usa para mover el plano de corte en Y
+        // (el signo menos es porque el plano está definido con normal hacia -Y)
         clippingPlane.constant = -parseFloat(e.target.value);
     });
 }
