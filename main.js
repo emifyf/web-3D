@@ -7,10 +7,7 @@ let scene, camera, renderer, controls;
 let stlMeshes = [];
 let fpsElement;
 let clock = new THREE.Clock();
-// --- CLIPPING PLANE (PLANO DE CORTE) ---
-
-// Esta variable global almacenará el plano de corte que se aplicará a todos los modelos STL
-let clippingPlane;
+let clippingPlanes = { xmin: null, xmax: null, ymin: null, ymax: null, zmin: null, zmax: null };
 let globalBoundingBox = null;
 let stlFilesLoaded = 0;
 let stlFilesAttempted = 0;
@@ -55,6 +52,7 @@ function init() {
     // El piso se crea después de cargar los modelos
     stlFilesLoaded = 0;
     stlFilesAttempted = 0;
+    stlMeshes = [];
     STL_FILES.forEach(filename => {
         loadSTL(`/STL/${filename}`, () => {
             stlFilesLoaded++;
@@ -103,45 +101,124 @@ function loadSTL(path, onSuccess, onError) {
 function checkSTLLoadingComplete() {
     if (stlFilesAttempted === STL_FILES.length) {
         if (stlMeshes.length > 0) {
-            centerCameraAndSlider();
-            createClippingSlider();
-        } else {
-            removeClippingSlider();
+            centerCameraAndSliders();
         }
     }
 }
 
-// Centrar la cámara y ajustar el slider y el piso
-function centerCameraAndSlider() {
+function centerCameraAndSliders() {
     if (!globalBoundingBox) return;
     const center = new THREE.Vector3();
     globalBoundingBox.getCenter(center);
     controls.target.copy(center);
     controls.update();
 
-    // Definimos el rango del slider y el valor inicial del plano de corte
+    // Crear los 6 clipping planes globales (Xmin, Xmax, Ymin, Ymax, Zmin, Zmax)
+    const minX = globalBoundingBox.min.x;
+    const maxX = globalBoundingBox.max.x;
     const minY = globalBoundingBox.min.y;
     const maxY = globalBoundingBox.max.y;
-    const centerY = center.y;
+    const minZ = globalBoundingBox.min.z;
+    const maxZ = globalBoundingBox.max.z;
 
-    // --- CREACIÓN DEL PLANO DE CORTE ---
-    // El plano de corte se define con una normal apuntando hacia arriba (eje Y negativo)
-    // y pasa por el centro vertical del bounding box global de los modelos
-    clippingPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), -centerY);
+    clippingPlanes.xmin = new THREE.Plane(new THREE.Vector3(1, 0, 0), -minX);   // X min
+    clippingPlanes.xmax = new THREE.Plane(new THREE.Vector3(-1, 0, 0), maxX);   // X max
+    clippingPlanes.ymin = new THREE.Plane(new THREE.Vector3(0, 1, 0), -minY);   // Y min
+    clippingPlanes.ymax = new THREE.Plane(new THREE.Vector3(0, -1, 0), maxY);   // Y max
+    clippingPlanes.zmin = new THREE.Plane(new THREE.Vector3(0, 0, 1), -minZ);   // Z min
+    clippingPlanes.zmax = new THREE.Plane(new THREE.Vector3(0, 0, -1), maxZ);   // Z max
 
-    // --- ASIGNACIÓN DEL PLANO DE CORTE A LOS MODELOS ---
-    // Recorremos todos los modelos STL y les asignamos el plano de corte
-    // Esto permite que el corte afecte a todos los modelos simultáneamente
+    // Asignar los 6 planos a todos los modelos
     stlMeshes.forEach(mesh => {
-        mesh.material.clippingPlanes = [clippingPlane]; // Asignar el plano
-        mesh.material.needsUpdate = true; // Forzar actualización del material
+        mesh.material.clippingPlanes = [
+            clippingPlanes.xmin, clippingPlanes.xmax,
+            clippingPlanes.ymin, clippingPlanes.ymax,
+            clippingPlanes.zmin, clippingPlanes.zmax
+        ];
+        mesh.material.needsUpdate = true;
     });
 
-    // Actualizamos el slider para que controle el plano de corte
-    updateClippingSliderRange(minY, maxY, centerY);
-
-    // Crear el piso adaptativo
+    createClipSliders({
+        minX, maxX,
+        minY, maxY,
+        minZ, maxZ
+    });
     createAdaptiveGround(center);
+}
+
+function createClipSliders(bounds) {
+    // Eliminar sliders previos si existen
+    const ids = ['clipXmin', 'clipXmax', 'clipYmin', 'clipYmax', 'clipZmin', 'clipZmax'];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.parentElement.remove();
+    });
+
+    // Crear contenedor
+    let slidersContainer = document.getElementById('clip-sliders');
+    if (!slidersContainer) {
+        slidersContainer = document.createElement('div');
+        slidersContainer.id = 'clip-sliders';
+        slidersContainer.style.position = 'absolute';
+        slidersContainer.style.right = '20px';
+        slidersContainer.style.top = '20px';
+        slidersContainer.style.zIndex = 200;
+        slidersContainer.style.display = 'flex';
+        slidersContainer.style.flexDirection = 'column';
+        slidersContainer.style.gap = '8px';
+        slidersContainer.style.background = 'rgba(0,0,0,0.2)';
+        slidersContainer.style.padding = '10px 12px 10px 12px';
+        slidersContainer.style.borderRadius = '10px';
+        document.body.appendChild(slidersContainer);
+    }
+    slidersContainer.innerHTML = '';
+
+    // Helper para crear cada slider
+    function addSlider(labelText, id, min, max, value, onInput) {
+        const label = document.createElement('label');
+        label.textContent = labelText;
+        label.style.color = 'white';
+        label.style.marginRight = '8px';
+        label.style.fontSize = '13px';
+        label.style.width = '80px';
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.id = id;
+        slider.min = min;
+        slider.max = max;
+        slider.value = value;
+        slider.step = 0.1;
+        slider.style.width = '180px';
+        slider.oninput = onInput;
+        const wrapper = document.createElement('div');
+        wrapper.style.display = 'flex';
+        wrapper.style.alignItems = 'center';
+        wrapper.appendChild(label);
+        wrapper.appendChild(slider);
+        slidersContainer.appendChild(wrapper);
+    }
+
+    // Sliders para X
+    addSlider('Clip X min:', 'clipXmin', bounds.minX, bounds.maxX, bounds.minX, (e) => {
+        clippingPlanes.xmin.constant = -parseFloat(e.target.value);
+    });
+    addSlider('Clip X max:', 'clipXmax', bounds.minX, bounds.maxX, bounds.maxX, (e) => {
+        clippingPlanes.xmax.constant = parseFloat(e.target.value);
+    });
+    // Sliders para Y
+    addSlider('Clip Y min:', 'clipYmin', bounds.minY, bounds.maxY, bounds.minY, (e) => {
+        clippingPlanes.ymin.constant = -parseFloat(e.target.value);
+    });
+    addSlider('Clip Y max:', 'clipYmax', bounds.minY, bounds.maxY, bounds.maxY, (e) => {
+        clippingPlanes.ymax.constant = parseFloat(e.target.value);
+    });
+    // Sliders para Z
+    addSlider('Clip Z min:', 'clipZmin', bounds.minZ, bounds.maxZ, bounds.minZ, (e) => {
+        clippingPlanes.zmin.constant = -parseFloat(e.target.value);
+    });
+    addSlider('Clip Z max:', 'clipZmax', bounds.minZ, bounds.maxZ, bounds.maxZ, (e) => {
+        clippingPlanes.zmax.constant = parseFloat(e.target.value);
+    });
 }
 
 function createAdaptiveGround(center) {
@@ -167,46 +244,6 @@ function createAdaptiveGround(center) {
     ground.position.y = groundY;
     ground.name = 'adaptiveGround';
     scene.add(ground);
-}
-
-function createClippingSlider() {
-    let slider = document.getElementById('clipY');
-    if (!slider) {
-        slider = document.createElement('input');
-        slider.type = 'range';
-        slider.id = 'clipY';
-        slider.step = 0.1;
-        slider.style.position = 'absolute';
-        slider.style.right = '20px';
-        slider.style.top = '20px';
-        slider.style.zIndex = 200;
-        document.body.appendChild(slider);
-    }
-    slider.style.display = '';
-    // --- CONTROL DEL PLANO DE CORTE POR SLIDER ---
-    // Cada vez que el usuario mueve el slider, se actualiza la posición del plano de corte
-    slider.addEventListener('input', (e) => {
-        // El valor del slider se usa para mover el plano de corte en Y
-        // (el signo menos es porque el plano está definido con normal hacia -Y)
-        clippingPlane.constant = -parseFloat(e.target.value);
-    });
-}
-
-function removeClippingSlider() {
-    let slider = document.getElementById('clipY');
-    if (slider) {
-        slider.style.display = 'none';
-    }
-}
-
-function updateClippingSliderRange(min, max, center) {
-    let slider = document.getElementById('clipY');
-    if (slider) {
-        slider.min = min;
-        slider.max = max;
-        slider.value = center;
-        clippingPlane.constant = -center;
-    }
 }
 
 function onWindowResize() {
