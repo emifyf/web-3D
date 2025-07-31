@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proyecto 3D - Three.js</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        #info h1 {
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        #info p {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .controls h3 {
+            margin-bottom: 10px;
+        }
+
+        .controls ul {
+            list-style: none;
+            font-size: 12px;
+        }
+
+        .controls li {
+            margin-bottom: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="info">
+            <h1>🚀 Proyecto Three.js</h1>
+            <p>Escena 3D interactiva</p>
+            <p>FPS: <span id="fps">0</span></p>
+        </div>
+        
+        <div class="controls">
+            <h3>🎮 Controles:</h3>
+            <ul>
+                <li>🖱️ Click + arrastrar: Rotar cámara</li>
+                <li>🔍 Scroll: Zoom</li>
+                <li>⌨️ WASD: Mover cámara</li>
+            </ul>
+        </div>
+    </div>
+
+    <script type="module" src="/main.js"></script>
+</body>
+</html> 
