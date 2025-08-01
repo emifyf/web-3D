@@ -18,10 +18,7 @@ const COLORS = [0x1976d2, 0xd32f2f, 0xffffff, 0x888888, 0xffeb3b];
 // Lista de archivos STL a cargar
 const STL_FILES = [
   'modelo.stl',
-  'vertebrae_C1.stl',
-  'vertebrae_C2.stl',
-  'vertebrae_C3.stl',
-  'vein.stl'
+
 ];
 
 function init() {
@@ -54,7 +51,7 @@ function init() {
     stlFilesAttempted = 0;
     stlMeshes = [];
     STL_FILES.forEach(filename => {
-        loadSTL(`/STL/${filename}`, () => {
+        loadSTL(`/GLTF/${filename}`, () => {
             stlFilesLoaded++;
             stlFilesAttempted++;
             checkSTLLoadingComplete();
