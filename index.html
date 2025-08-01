@@ -1,13 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Three.js GLTF + Clipping Sliders</title>
-  <style>body { margin:0; overflow:hidden; background:#1a1a2e; }</style>
+  <title>GLTF Clipping & Mesh Color Gui</title>
+  <style>
+    html, body { margin:0; overflow:hidden; height:100%; background:#1a1a2e; }
+    canvas { display: block; }
+    .lil-gui { z-index: 10; }
+  </style>
 </head>
 <body>
-  <div id="container"></div>
-  <div id="fps" style="position:absolute;top:10px;left:10px;color:white;"></div>
   <script type="importmap">
   {
     "imports": {
