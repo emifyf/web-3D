@@ -1,9 +1,12 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+// import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
+import { OrbitControls } from "three/addons/controls/OrbitControls.js"
+import { ViewportGizmo } from "three-viewport-gizmo"
 
-let scene, camera, renderer, controls;
+
+let scene, camera, renderer, controls,gizmo;
 let colorController;
 let transparencyController;
 const planes = [];
@@ -23,11 +26,13 @@ const meshSettings = new Map();
 
 
 
-const projects = [
-  { name: "Modelo", path: "./GLTF/modelo.gltf", type: "Craneal", date: "21/8/2025" },
-  { name: "Modelo 2", path: "./GLTF/modelo 2.gltf", type: "Craneal", date: "21/8/2025" },
-  { name: "Modelo 3", path: "./GLTF/modelo 3.gltf", type: "Craneal", date: "21/8/2025" }
-];
+let projects = [];
+fetch("./projects.json")
+  .then(r => r.json())
+  .then(data => {
+    projects = data;
+    loadProjects();
+  });
 
 function loadProjects() {
   const list = document.getElementById("projectList");
@@ -74,11 +79,24 @@ function loadProject(index) {
 
   loadGLTF(project.path);
 }
+
+
 init();
 function init(){
+
+
+  document.getElementById("homeBtn").addEventListener("click", () => {
+    controls.reset(); // resetea a la posición inicial
+    // si querés siempre centrar en el modelo:
+    if (currentModel) frameCamera(currentModel);
+  });
+
+
     window.addEventListener('click', onClick, false);
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x1a1a2e);
+
+
 
   camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.01, 1000);
   camera.position.set(5,5,5);
@@ -90,6 +108,10 @@ function init(){
 
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
+
+  gizmo = new ViewportGizmo(camera, renderer);
+  gizmo.attachControls(controls);
+
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.6));
   const dir = new THREE.DirectionalLight(0xffffff, 1.2);
@@ -177,7 +199,8 @@ function onClick(event) {
 function loadGLTF(path){
   new GLTFLoader().load(path,
     gltf => {
-        
+      const meta = gltf.parser.json.asset.extras;
+      console.log(path);
       const root = gltf.scene;
       scene.add(root);
 
@@ -363,11 +386,13 @@ function onResize(){
   camera.aspect = window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  if (gizmo) gizmo.update();
 }
 
 function animate(){
   requestAnimationFrame(animate);
   controls.update();
+  if (gizmo) gizmo.render(); // Verificar que gizmo existe antes de renderizar
   renderer.render(scene, camera);
 }
 
@@ -378,4 +403,5 @@ function takeScreenshot() {
   link.href = dataURL;
   link.download = 'screenshot.png';
   link.click();
+  
 }

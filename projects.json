@@ -1,0 +1,26 @@
+[
+  {
+    "name": "cubo",
+    "path": ".\\public\\GLTF/cubo.glb",
+    "type": "Craneal",
+    "date": "31/7/2025"
+  },
+  {
+    "name": "modelo 2",
+    "path": ".\\public\\GLTF/modelo 2.gltf",
+    "type": "Craneal",
+    "date": "31/7/2025"
+  },
+  {
+    "name": "modelo 3",
+    "path": ".\\public\\GLTF/modelo 3.gltf",
+    "type": "Craneal",
+    "date": "22/8/2025"
+  },
+  {
+    "name": "modelo",
+    "path": ".\\public\\GLTF/modelo.gltf",
+    "type": "Craneal",
+    "date": "19/8/2025"
+  }
+]

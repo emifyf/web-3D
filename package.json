@@ -8,13 +8,18 @@
     "build": "vite build",
     "preview": "vite preview"
   },
-  "keywords": ["three.js", "3d", "webgl"],
+  "keywords": [
+    "three.js",
+    "3d",
+    "webgl"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "three": "^0.160.0"
+    "three": "^0.179.1",
+    "three-viewport-gizmo": "^2.2.0"
   },
   "devDependencies": {
     "vite": "^5.0.0"
   }
-} 
+}
