@@ -72,7 +72,10 @@ function onClick(event) {
     mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
   
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(selectableMeshes);
+    const intersects = raycaster.intersectObjects(
+      selectableMeshes.filter(m => m.material.opacity > 0 && m.visible)
+    );
+  
   
     if (intersects.length > 0) {
       const mesh = intersects[0].object;
@@ -81,14 +84,36 @@ function onClick(event) {
   
       // Recuperar color y opacidad de la malla
       const settings = meshSettings.get(mesh) || {
+        name:mesh.name,
         color: '#' + mesh.material.color.getHexString(),
         opacity: mesh.material.opacity
       };
+
       guiParams.color = settings.color;
       guiParams.opacity = settings.opacity;
-  
+
       
 
+      colorController.setValue(guiParams.color);
+      transparencyController.setValue(guiParams.opacity);
+    }
+    if (intersects.length > 0) {
+      const mesh = intersects[0].object;
+      selectedMeshIndex = selectableMeshes.indexOf(mesh);
+      guiParams.selectedMesh = selectedMeshIndex;
+    
+      const settings = meshSettings.get(mesh) || {
+        name: mesh.name,
+        color: '#' + mesh.material.color.getHexString(),
+        opacity: mesh.material.opacity
+      };
+    
+      guiParams.color = settings.color;
+      guiParams.opacity = settings.opacity;
+    
+      // 🔑 Actualizamos los controles de GUI
+      updateClippingState()
+      meshSelectorController.setValue(selectedMeshIndex);
       colorController.setValue(guiParams.color);
       transparencyController.setValue(guiParams.opacity);
     }
@@ -103,7 +128,8 @@ function loadGLTF(path){
 
       root.traverse(obj => {
         if (obj.isMesh) {
-            const box = new THREE.Box3().setFromObject(obj);
+          const box = new THREE.Box3().setFromObject(obj);
+          console.log(box)
   const { min, max } = box;
   const localPlanes = [
     new THREE.Plane(new THREE.Vector3(1,0,0), -min.x),
@@ -142,8 +168,10 @@ function loadGLTF(path){
     undefined, error => console.error('GLTF load error:', error)
   );
 }
+
 function setupStencilCaps(root){
     const box = new THREE.Box3().setFromObject(root);
+    console.log(box)
     const def = [
       {n:new THREE.Vector3(1,0,0),c:-box.min.x},
       {n:new THREE.Vector3(-1,0,0),c:box.max.x},
@@ -153,9 +181,13 @@ function setupStencilCaps(root){
       {n:new THREE.Vector3(0,0,-1),c:box.max.z},
     ];
     def.forEach((d,i)=>{
-      planes[i].normal.copy(d.n); planes[i].constant = d.c;
+      planes[i].normal.copy(d.n); 
+      planes[i].constant = d.c; 
+  
+      // 👇 inicializamos los offsets con los valores correctos
+      clipState[`offset${i}`] = d.c;
     });
-  }
+}
 
 function frameCamera(root){
     const box = new THREE.Box3().setFromObject(root);
@@ -163,29 +195,30 @@ function frameCamera(root){
     const size = box.getSize(new THREE.Vector3()).length();
     camera.position.copy(center).add(new THREE.Vector3(1,1,1).multiplyScalar(size));
     controls.target.copy(center); controls.update();
-  }
+}
 
 
 
-  
 
+let meshSelectorController; // 👉 declaramos global
+guiParams.clipSelectedOnly = false;
 
 function setupGUI(){
   const gui = new GUI();
 
-
   gui.add(guiParams, 'showHelpers').name('Show Planes')
     .onChange(v => planeHelpers.forEach(ph => ph.visible = v));
 
+  const meshOptions = {};
+  selectableMeshes.forEach((mesh, i) => {
+    meshOptions[mesh.name || `Mesh_${i}`] = i;
+  });
 
-    const meshOptions = {};
-    selectableMeshes.forEach((mesh, i) => {
-      meshOptions[mesh.name] = i;
-    });
-    guiParams.selectedMesh = 0;
+  guiParams.selectedMesh = 0;
     
-   
-    gui.add(guiParams, 'selectedMesh', meshOptions).name('Target Mesh').onChange(i => {
+  meshSelectorController = gui.add(guiParams, 'selectedMesh', meshOptions)
+    .name('Target Mesh')
+    .onChange(i => {
       const target = selectableMeshes[i];
       const settings = meshSettings.get(target) || {
         color: '#' + target.material.color.getHexString(),
@@ -195,57 +228,75 @@ function setupGUI(){
       guiParams.opacity = settings.opacity;
       colorController.setValue(guiParams.color);
       transparencyController.setValue(guiParams.opacity);
+      updateClippingState()
     });
 
-
-
-     colorController = gui.addColor(guiParams, 'color').name('Color').onChange(c => {
-        const mesh = selectableMeshes[guiParams.selectedMesh];
-        mesh.material.color.set(c);
-        saveMeshSettings(mesh);
-      });
-
-     transparencyController = gui.add(guiParams, 'opacity', 0,1,0.01).name('Opacity').onChange(v => {
-        const mesh = selectableMeshes[guiParams.selectedMesh];
-        mesh.material.opacity = v;
-        mesh.material.transparent = v < 1;
-        saveMeshSettings(mesh);
-        
-    });
     
-    //   colo totald el gltf
-//   gui.addColor(guiParams, 'color').name('Mesh Color').onChange(c => {
-//     scene.traverse(o=>o.isMesh && o.material.color.set(c));
-//   });
 
-    // transparencia total del gltf
-//   gui.add(guiParams, 'opacity', 0,1,0.01).name('Opacity').onChange(v => {
-//     scene.traverse(o=>{
-//       if(o.isMesh){
-//         o.material.opacity = v;
-//         o.material.transparent = v < 1;
-//       }
-//     });
-//   });
+  gui.add(guiParams, 'clipSelectedOnly').name('Clip Only Target').onChange(v => {
+      selectableMeshes.forEach((mesh, i) => {
+        if (v) {
+          // Solo el seleccionado se clipea
+          mesh.material.clippingPlanes = (i === guiParams.selectedMesh) ? planes : [];
+        } else {
+          // Todos se clipean
+          mesh.material.clippingPlanes = planes;
+        }
+      });
+    });
 
-// no funciona tan bien
+
+  colorController = gui.addColor(guiParams, 'color').name('Color').onChange(c => {
+    const mesh = selectableMeshes[guiParams.selectedMesh];
+    mesh.material.color.set(c);
+    saveMeshSettings(mesh);
+  });
+
+  transparencyController = gui.add(guiParams, 'opacity', 0,1,0.01).name('Opacity').onChange(v => {
+    const mesh = selectableMeshes[guiParams.selectedMesh];
+    mesh.material.opacity = v;
+    mesh.material.transparent = v < 1;
+    saveMeshSettings(mesh);
+  });
+
+  // planos
   const axisNames = ['-X','+X','-Y','+Y','-Z','+Z'];
   planes.forEach((pl,i)=>{
     const folder = gui.addFolder(axisNames[i]);
     folder.add(clipState, `offset${i}`, -0.1, 0.1, 0.001).name('Offset').onChange(v => pl.constant = v);
-    folder.add(clipState, `flip${i}`, false).name('Flip').onChange(()=>{ pl.negate(); clipState[`offset${i}`]=pl.constant; });
+    folder.add(clipState, `flip${i}`, false).name('Flip').onChange(()=>{
+      pl.negate(); 
+      clipState[`offset${i}`]=pl.constant;
+    });
     folder.open();
   });
-
-  
 }
+
+
+
+function updateClippingState() {
+  selectableMeshes.forEach((mesh, i) => {
+    mesh.material.clippingPlanes = (guiParams.clipSelectedOnly && i !== guiParams.selectedMesh) 
+      ? [] 
+      : planes;
+  });
+}
+
+
 function saveMeshSettings(mesh) {
     meshSettings.set(mesh, {
       color: '#' + mesh.material.color.getHexString(),
       opacity: mesh.material.opacity
     });
-  }
-  
+}
+ 
+
+function getMesh(mesh){
+  selectableMeshes.forEach((mesh, i) => {
+  meshOptions[mesh.name] = i;
+});
+}
+
 function onResize(){
   camera.aspect = window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
