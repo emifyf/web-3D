@@ -20,8 +20,61 @@ const meshSettings = new Map();
 
 
 
-init();
 
+
+
+const projects = [
+  { name: "Modelo", path: "./GLTF/modelo.gltf", type: "Craneal", date: "21/8/2025" },
+  { name: "Modelo 2", path: "./GLTF/modelo 2.gltf", type: "Craneal", date: "21/8/2025" },
+  { name: "Modelo 3", path: "./GLTF/modelo 3.gltf", type: "Craneal", date: "21/8/2025" }
+];
+
+function loadProjects() {
+  const list = document.getElementById("projectList");
+  list.innerHTML = "";
+
+  projects.forEach((p, i) => {
+    const li = document.createElement("li");
+    li.style.cursor = "pointer";
+    li.style.padding = "8px";
+    li.style.borderBottom = "1px solid #ddd";
+    li.innerHTML = `
+      <strong>${p.name}</strong><br>
+      <small>${p.type} • ${p.date}</small>
+    `;
+
+    li.onclick = () => {
+      loadProject(i);
+      highlightProject(list, li);
+    };
+
+    list.appendChild(li);
+  });
+}
+
+function highlightProject(list, li) {
+  [...list.children].forEach(c => c.style.background = "");
+  li.style.background = "#d0ebff";
+}
+
+
+
+
+
+
+
+function loadProject(index) {
+  const project = projects[index];
+
+  // limpiar escena (manteniendo luces y helpers)
+  scene.children = scene.children.filter(o => o.isLight || o.type === "PlaneHelper" || o.isCamera);
+
+  selectableMeshes.length = 0;
+  meshSettings.clear();
+
+  loadGLTF(project.path);
+}
+init();
 function init(){
     window.addEventListener('click', onClick, false);
   scene = new THREE.Scene();
@@ -60,7 +113,9 @@ function init(){
     clipState[`flip${i}`] = false;
   });
 
-  loadGLTF('/GLTF/modelo.gltf');
+  // loadGLTF('/GLTF/modelo.gltf');
+  loadProjects();
+
 
   window.addEventListener('resize', onResize);
   animate();
@@ -152,6 +207,9 @@ function loadGLTF(path){
         }
       });
 
+
+
+
         frameCamera(root);
         setupStencilCaps(root);
 
@@ -206,8 +264,8 @@ guiParams.clipSelectedOnly = false;
 function setupGUI(){
   const gui = new GUI();
 
-  gui.add(guiParams, 'showHelpers').name('Show Planes')
-    .onChange(v => planeHelpers.forEach(ph => ph.visible = v));
+  // gui.add(guiParams, 'showHelpers').name('Show Planes')
+  //   .onChange(v => planeHelpers.forEach(ph => ph.visible = v));
 
   const meshOptions = {};
   selectableMeshes.forEach((mesh, i) => {
@@ -232,6 +290,7 @@ function setupGUI(){
     });
 
     
+  // gui.add({ screenshot: takeScreenshot }, 'screenshot').name('📷 Screenshot');
 
   gui.add(guiParams, 'clipSelectedOnly').name('Clip Only Target').onChange(v => {
       selectableMeshes.forEach((mesh, i) => {
@@ -256,6 +315,9 @@ function setupGUI(){
     const mesh = selectableMeshes[guiParams.selectedMesh];
     mesh.material.opacity = v;
     mesh.material.transparent = v < 1;
+    // importante para translucidez correcta:
+    mesh.material.depthWrite = (v === 1); // si es transparente, desactivar depthWrite
+    mesh.material.needsUpdate = true;
     saveMeshSettings(mesh);
   });
 
@@ -307,4 +369,13 @@ function animate(){
   requestAnimationFrame(animate);
   controls.update();
   renderer.render(scene, camera);
+}
+
+
+function takeScreenshot() {
+  const dataURL = renderer.domElement.toDataURL('image/png');
+  const link = document.createElement('a');
+  link.href = dataURL;
+  link.download = 'screenshot.png';
+  link.click();
 }

@@ -8,8 +8,18 @@
     canvas { display: block; }
     .lil-gui { z-index: 10; }
   </style>
+
 </head>
-<body>
+<body style="margin:0; display:flex; height:100vh;">
+  <div id="sidebar" style="width:200px; float:left; background:#f0f0f0; padding:10px;">
+    <h3>Mis Proyectos</h3>
+    <ul id="projectList" style="list-style:none; padding:0;"></ul>
+  </div>
+
+  <div id="viewer" style="margin-left:5px;">
+    <!-- Aquí irá el canvas de Three.js -->
+  </div>
+
   <script type="importmap">
   {
     "imports": {
