@@ -7,6 +7,7 @@ import { ViewportGizmo } from "three-viewport-gizmo"
 
 
 let scene, camera, renderer, controls,gizmo;
+let currentModel=null;
 let colorController;
 let transparencyController;
 const planes = [];
@@ -69,6 +70,7 @@ function highlightProject(list, li) {
 
 
 function loadProject(index) {
+  renderer.info.reset(); 
   const project = projects[index];
 
   // limpiar escena (manteniendo luces y helpers)
@@ -86,30 +88,229 @@ function init(){
 
 
   document.getElementById("homeBtn").addEventListener("click", () => {
-    controls.reset(); // resetea a la posición inicial
-    // si querés siempre centrar en el modelo:
-    if (currentModel) frameCamera(currentModel);
+    controls.reset();
+    console.log("hola")
+    if (currentModel) {
+      frameCamera(currentModel);
+    }
   });
 
+  window.addEventListener('click', onClick, false);
 
-    window.addEventListener('click', onClick, false);
+
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x1a1a2e);
-
-
-
   camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.01, 1000);
   camera.position.set(5,5,5);
 
   renderer = new THREE.WebGLRenderer({ antialias:true, stencil:true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.localClippingEnabled = true;
+
   document.body.appendChild(renderer.domElement);
 
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
+  controls.enablePan = false;
 
-  gizmo = new ViewportGizmo(camera, renderer);
+  gizmo = new ViewportGizmo(camera, renderer,{
+    "type": "sphere",
+    "size": 150,
+    "placement": "bottom-right",
+    "resolution": 64,
+    "lineWidth": 2,
+    "radius": 1,
+    "smoothness": 18,
+    "animated": true,
+    "speed": 1,
+    "background": {
+      "enabled": true,
+      "color": 16777215,
+      "opacity": 0,
+      "hover": {
+        "color": 3375261,
+        "opacity": 0.2
+      }
+    },
+    "font": {
+      "family": "sans-serif",
+      "weight": 400
+    },
+    "offset": {
+      "top": 10,
+      "left": 10,
+      "bottom": 10,
+      "right": 10
+    },
+    "corners": {
+      "enabled": false,
+      "color": 15915362,
+      "opacity": 1,
+      "scale": 0.15,
+      "radius": 1,
+      "smoothness": 18,
+      "hover": {
+        "color": 16777215,
+        "opacity": 1,
+        "scale": 0.2
+      }
+    },
+    "edges": {
+      "enabled": false,
+      "color": 15915362,
+      "opacity": 1,
+      "radius": 1,
+      "smoothness": 18,
+      "scale": 0.15,
+      "hover": {
+        "color": 16777215,
+        "opacity": 1,
+        "scale": 0.2
+      }
+    },
+    "x": {
+      "enabled": true,
+      "color": 16725587,
+      "opacity": 0.7,
+      "scale": 0.5,
+      "labelColor": 2236962,
+      "line": false,
+      "border": {
+        "size": 0,
+        "color": 14540253
+      },
+      "hover": {
+        "color": 16777215,
+        "labelColor": 2236962,
+        "opacity": 1,
+        "scale": 0.7,
+        "border": {
+          "size": 0,
+          "color": 14540253
+        }
+      },
+      "label": ""
+    },
+    "y": {
+      "enabled": true,
+      "color": 2920447,
+      "opacity": 0.9,
+      "scale": 0.82,
+      "labelColor": 2236962,
+      "line": true,
+      "border": {
+        "size": 0,
+        "color": 14540253
+      },
+      "hover": {
+        "color": 16777215,
+        "labelColor": 2236962,
+        "opacity": 1,
+        "scale": 0.7,
+        "border": {
+          "size": 0,
+          "color": 14540253
+        }
+      },
+      "label": "S"
+    },
+    "z": {
+      "enabled": true,
+      "color": 9100032,
+      "opacity": 0.9,
+      "scale": 0.7,
+      "labelColor": 2236962,
+      "line": true,
+      "border": {
+        "size": 0,
+        "color": 14540253
+      },
+      "hover": {
+        "color": 16777215,
+        "labelColor": 2236962,
+        "opacity": 1,
+        "scale": 0.7,
+        "border": {
+          "size": 0,
+          "color": 14540253
+        }
+      },
+      "label": "A"
+    },
+    "nx": {
+      "line": true,
+      "scale": 0.7,
+      "hover": {
+        "scale": 0.5,
+        "color": 16777215,
+        "labelColor": 2236962,
+        "opacity": 1,
+        "border": {
+          "size": 0,
+          "color": 14540253
+        }
+      },
+      "label": "R",
+      "enabled": true,
+      "color": 16725587,
+      "opacity": 0.9,
+      "labelColor": 2236962,
+      "border": {
+        "size": 0,
+        "color": 14540253
+      }
+    },
+    "ny": {
+      "line": false,
+      "scale": 0.45,
+      "hover": {
+        "scale": 0.5,
+        "color": 16777215,
+        "labelColor": 2236962,
+        "opacity": 1,
+        "border": {
+          "size": 0,
+          "color": 14540253
+        }
+      },
+      "label": "",
+      "enabled": true,
+      "color": 2920447,
+      "opacity": 0.7,
+      "labelColor": 2236962,
+      "border": {
+        "size": 0,
+        "color": 14540253
+      }
+    },
+    "nz": {
+      "line": false,
+      "scale": 0.45,
+      "hover": {
+        "scale": 0.5,
+        "color": 16777215,
+        "labelColor": 2236962,
+        "opacity": 1,
+        "border": {
+          "size": 0,
+          "color": 14540253
+        }
+      },
+      "label": "",
+      "enabled": true,
+      "color": 9100032,
+      "opacity": 0.7,
+      "labelColor": 2236962,
+      "border": {
+        "size": 0,
+        "color": 14540253
+      }
+    },
+    "isSphere": true
+  }
+
+  );
+
   gizmo.attachControls(controls);
 
 
@@ -117,6 +318,7 @@ function init(){
   const dir = new THREE.DirectionalLight(0xffffff, 1.2);
   dir.position.set(5, 10, 7);
   scene.add(dir);
+  
 
   const axisNames = ['-.X','+.X','-.Y','+.Y','-.Z','+.Z'];
   const normals = [
@@ -142,6 +344,8 @@ function init(){
   window.addEventListener('resize', onResize);
   animate();
 }
+
+
 function onClick(event) {
     console.log('click');
     const rect = renderer.domElement.getBoundingClientRect();
@@ -203,6 +407,7 @@ function loadGLTF(path){
       console.log(path);
       const root = gltf.scene;
       scene.add(root);
+      currentModel = gltf.scene;
 
       root.traverse(obj => {
         if (obj.isMesh) {
@@ -392,8 +597,8 @@ function onResize(){
 function animate(){
   requestAnimationFrame(animate);
   controls.update();
-  if (gizmo) gizmo.render(); // Verificar que gizmo existe antes de renderizar
   renderer.render(scene, camera);
+  if (gizmo) gizmo.render(); // Verificar que gizmo existe antes de renderizar
 }
 
 

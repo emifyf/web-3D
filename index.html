@@ -1,218 +1,266 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <title>Lambda Viewer</title>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Lambda Viewer</title>
+
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #333;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            overflow: hidden;
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        color: #333;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        overflow: hidden;
+      }
+      .parent {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    gap: 8px;
+}
+    
+.div1 {
+    grid-row: span 5 / span 5;
+}
+
+.div2 {
+    grid-column: span 4 / span 4;
+    grid-row: span 5 / span 5;
+}
+   
+      #container {
+        display: flex;
+        height: 100vh;
+      }
+      #sidebar {
+        width: 320px;
+        height: 100vh;
+        float: left;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 20px;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+        overflow-y: auto;
+        z-index: 10;
+      }
+      #viewer {
+        flex: 1;
+        position: relative;
+        height: 100vh; 
+        overflow:hidden;
+        margin-left: 5px;
+      }
+      #canvas-container {
+        width: 50%;
+        height: 50%;
+      }
+      #header {
+        margin-bottom: 25px;
+        text-align: center;
+      }
+      #header h1 {
+        color: #2c3e50;
+        margin-bottom: 5px;
+        font-size: 24px;
+      }
+      #header p {
+        color: #7f8c8d;
+        font-size: 14px;
+      }
+      .section {
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #ecf0f1;
+      }
+      .section h2 {
+        font-size: 18px;
+        color: #3498db;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+      }
+      .section h2::before {
+        content: "";
+        display: inline-block;
+        width: 4px;
+        height: 18px;
+        background: #3498db;
+        margin-right: 10px;
+        border-radius: 2px;
+      }
+      #projectList {
+        list-style: none;
+      }
+      #projectList li {
+        padding: 12px;
+        margin-bottom: 8px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      #projectList li:hover {
+        background: #e8f4fc;
+        transform: translateX(3px);
+      }
+      #projectList li.active {
+        background: #d0ebff;
+        border-left: 3px solid #3498db;
+      }
+      #projectList strong {
+        display: block;
+        color: #2c3e50;
+      }
+      #projectList small {
+        color: #7f8c8d;
+      }
+      .button {
+        background: #3498db;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .button:hover {
+        background: #330606;
+      }
+      .button i {
+        margin-right: 5px;
+      }
+      #loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 18px;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 15px 25px;
+        border-radius: 8px;
+        z-index: 100;
+      }
+      .gui-container {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        z-index: 100;
+      }
+      #toggleGUI {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        z-index: 101;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .responsive-gizmo 
+        {
+
+
         }
-        #container {
-            display: flex;
-            height: 100vh;
-        }
-        #sidebar {
-            width: 320px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 20px;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
-            overflow-y: auto;
-            z-index: 10;
-        }
-        #viewer {
-            flex: 1;
-            position: relative;
-        }
-        #canvas-container {
-            width: 100%;
-            height: 100%;
-        }
-        #header {
-            margin-bottom: 25px;
-            text-align: center;
-        }
-        #header h1 {
-            color: #2c3e50;
-            margin-bottom: 5px;
-            font-size: 24px;
-        }
-        #header p {
-            color: #7f8c8d;
-            font-size: 14px;
-        }
-        .section {
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #ecf0f1;
-        }
-        .section h2 {
-            font-size: 18px;
-            color: #3498db;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-        }
-        .section h2::before {
-            content: "";
-            display: inline-block;
-            width: 4px;
-            height: 18px;
-            background: #3498db;
-            margin-right: 10px;
-            border-radius: 2px;
-        }
-        #projectList {
-            list-style: none;
-        }
-        #projectList li {
-            padding: 12px;
-            margin-bottom: 8px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        #projectList li:hover {
-            background: #e8f4fc;
-            transform: translateX(3px);
-        }
-        #projectList li.active {
-            background: #d0ebff;
-            border-left: 3px solid #3498db;
-        }
-        #projectList strong {
-            display: block;
-            color: #2c3e50;
-        }
-        #projectList small {
-            color: #7f8c8d;
-        }
-        .button {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .button:hover {
-            background: #2980b9;
-        }
-        .button i {
-            margin-right: 5px;
-        }
-        #loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 18px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px 25px;
-            border-radius: 8px;
-            z-index: 100;
-        }
-        .gui-container {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            z-index: 100;
-        }
-        #toggleGUI {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            z-index: 101;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .viewport-gizmo {
-            bottom: 15px !important;
-            right: 15px !important;
-        }
+
+
     </style>
 
-</head>
-<body style="margin:0; display:flex; height:100vh;">
-
-    <div id="container">
-      <div id="sidebar">
+  </head>
+  <body style="margin: 0; display: flex; height: 100vh">
+    <div class="parent">
+      <div id="container">
+        <div class="div1" id="sidebar">
+  
           <div id="header">
-              <img src="./logo.png" alt="Lambda 3D" style=" width 15px; height: 95px;">
+            <img
+              src="./logo.png"
+              alt="Lambda 3D"
+              style="width: auto; height: 110px"
+            />
           </div>
-    <div class="section">
-                <h2>Proyectos</h2>
-                <ul id="projectList">
-                    <li class="project-item">
-                        <strong></strong>
-                        <small></small>
-                    </li>
-                    <li class="project-item">
-                        <strong></strong>
-                        <small></small>
-                    </li>
-                    <li class="project-item">
-                        <strong></strong>
-                        <small></small>
-                    </li>
-                </ul>
-            </div>
-            
-            <div class="section">
-                <h2>Controles</h2>
-                <button id="homeBtn" class="button">Resetear Vista</button>
-                <button id="screenshotBtn" class="button">Tomar Captura</button>
-            </div>
-            
-            <div class="section">
-                <h2>Instrucciones</h2>
-                <p>• Haz clic en un proyecto para cargarlo</p>
-                <p>• Usa el ratón para orbitar alrededor del modelo</p>
-                <p>• Usa la rueda del ratón para hacer zoom</p>
-                <p>• Haz clic en un mesh para seleccionarlo</p>
-                <p>• Usa los controles para modificar propiedades</p>
-            </div>
+  
+          <div class="section">
+            <h2>Proyectos</h2>
+            <ul id="projectList">
+              <li class="project-item">
+                <strong></strong>
+                <small></small>
+              </li>
+              <li class="project-item">
+                <strong></strong>
+                <small></small>
+              </li>
+              <li class="project-item">
+                <strong></strong>
+                <small></small>
+              </li>
+            </ul>
+          </div>
+  
+          <div class="section">
+            <h2>Controles</h2>
+            <button id="homeBtn" class="button">Resetear Vista</button>
+            <button id="screenshotBtn" class="button">Tomar Captura</button>
+          </div>
+  
+          <div class="section">
+            <h2>Instrucciones</h2>
+            <p>• Haz clic en un proyecto para cargarlo</p>
+            <p>• Usa el ratón para orbitar alrededor del modelo</p>
+            <p>• Usa la rueda del ratón para hacer zoom</p>
+            <p>• Haz clic en un mesh para seleccionarlo</p>
+            <p>• Usa los controles para modificar propiedades</p>
+          </div>
         </div>
-        
-
+      </div>
+  
+  
+      <button
+        id="homeBtn"
+        style="
+          position: absolute;
+          bottom: 10px;
+          right: 10px;
+          padding: 6px 12px;
+          border-radius: 6px;
+          background: #2196f3;
+          color: #fff;
+          border: none;
+          cursor: pointer;
+        "
+      >
+        🏠 Home
+      </button>
+  
+      <div id="viewer"  class="div2">
+        <!-- Aquí irá el canvas de Three.js -->
+      </div>
     </div>
-  <button id="homeBtn" style="
-  position:absolute; bottom:10px; right:10px; 
-  padding:8px 12px; background:#333; color:#fff; border:none; border-radius:4px; cursor:pointer;
-">🏠 Home</button>
+   
 
-  <div id="viewer" style="margin-left:5px;">
-    <!-- Aquí irá el canvas de Three.js -->
-  </div>
-
-  <script crossorigin="anonymous" type="importmap">
-  {
-    "imports": {
-      "three": "https://unpkg.com/three@0.173.0/build/three.module.js",
-      "OrbitControls": "https://unpkg.com/three@0.157.0/examples/jsm/controls/OrbitControls.js",
-      "three/addons/": "https://unpkg.com/three@0.173.0/examples/jsm/",
-      "GLTFLoader": "https://unpkg.com/three@0.157.0/examples/jsm/loaders/GLTFLoader.js",
-      "lil-gui": "https://unpkg.com/lil-gui@0.19.1/dist/lil-gui.esm.js",
-      "CSS2DRenderer": "https://unpkg.com/three@0.157.0/examples/jsm/renderers/CSS2DRenderer.js",
-      "three-viewport-gizmo": "https://unpkg.com/three-viewport-gizmo@2.2.0/dist/three-viewport-gizmo.js"
-
-    }
-  }
-  </script>
-  <script type="module" src="main.js"></script>
-</body>
+    <script crossorigin="anonymous" type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.173.0/build/three.module.js",
+          "OrbitControls": "https://unpkg.com/three@0.157.0/examples/jsm/controls/OrbitControls.js",
+          "three/addons/": "https://unpkg.com/three@0.173.0/examples/jsm/",
+          "GLTFLoader": "https://unpkg.com/three@0.157.0/examples/jsm/loaders/GLTFLoader.js",
+          "lil-gui": "https://unpkg.com/lil-gui@0.19.1/dist/lil-gui.esm.js",
+          "CSS2DRenderer": "https://unpkg.com/three@0.157.0/examples/jsm/renderers/CSS2DRenderer.js",
+          "three-viewport-gizmo": "https://unpkg.com/three-viewport-gizmo@2.2.0/dist/three-viewport-gizmo.js"
+        }
+      }
+    </script>
+    <script type="module" src="main.js"></script>
+  </body>
 </html>
