@@ -92,6 +92,7 @@ function init(){
     console.log("hola")
     if (currentModel) {
       frameCamera(currentModel);
+      
     }
   });
 
