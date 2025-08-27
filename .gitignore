@@ -1,9 +1,41 @@
-public/GLTF/cubo.glb
-public/GLTF/modelo.gltf
-public/GLTF/modelo.stl
-STL/NeedleModel.stl
-STL/vertebrae_C1.stl
-STL/vertebrae_C2.stl
-STL/vertebrae_C3.stl
+# Dependencies
 /node_modules
-/node_modules
+/.pnp
+.pnp.js
+
+# Production build
+/dist
+/build
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# STL files (large models)
+STL/
+*.stl
+
+# Keep GLTF files for deployment
+!public/GLTF/*.gltf
+!public/GLTF/*.glb

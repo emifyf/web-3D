@@ -1,19 +1,19 @@
 [
   {
     "name": "modelo 2",
-    "path": ".\\GLTF/modelo 2.gltf",
+    "path": "/GLTF/modelo 2.gltf",
     "type": "Craneal",
     "date": "27/8/2025"
   },
   {
     "name": "modelo 3",
-    "path": ".\\GLTF/modelo 3.gltf",
+    "path": "/GLTF/modelo 3.gltf",
     "type": "Craneal",
     "date": "27/8/2025"
   },
   {
     "name": "modelo",
-    "path": ".\\GLTF/modelo.gltf",
+    "path": "/GLTF/modelo.gltf",
     "type": "Craneal",
     "date": "19/8/2025"
   }
