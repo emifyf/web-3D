@@ -39,3 +39,4 @@ STL/
 # Keep GLTF files for deployment
 !public/GLTF/*.gltf
 !public/GLTF/*.glb
+.vercel
